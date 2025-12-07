@@ -149,8 +149,8 @@ class Webhook(object):
         response = httpx.request(**kwargs.to_dict())
         json_addict = HttpxResponseHandler.json_addict(response=response, condition=lambda x: x.is_success)
         if Draft202012Validator(self.send_validate_json_schema).is_valid(json_addict):
-            return True, json_addict
-        return None, json_addict
+            return True, json_addict, response
+        return None, json_addict, response
 
     def upload_media(self, f_type: str = "file", **kwargs):
         """
@@ -168,5 +168,5 @@ class Webhook(object):
         response = httpx.request(**kwargs.to_dict())
         json_addict = HttpxResponseHandler.json_addict(response=response, condition=lambda x: x.is_success)
         if Draft202012Validator(self.send_validate_json_schema).is_valid(json_addict):
-            return True, json_addict.get("media_id", None)
-        return None, json_addict
+            return True, json_addict.get("media_id", None), response
+        return None, json_addict, response

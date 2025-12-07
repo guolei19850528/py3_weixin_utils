@@ -35,7 +35,7 @@ class Server(object):
         self.get_api_domain_ip_validate_json_schema = {
             "type": "object",
             "properties": {
-                "ip_list": {"type": "array", "minItem": 1},
+                "ip_list": {"type": "array", "minItems": 1},
             },
             "required": ["ip_list"],
         }
@@ -88,8 +88,8 @@ class Server(object):
         response = httpx.request(**kwargs.to_dict())
         json_addict = HttpxResponseHandler.json_addict(response=response, condition=lambda x: x.is_success)
         if Draft202012Validator(self.gettoken_validate_json_schema).is_valid(json_addict):
-            return True, json_addict.get("access_token", None)
-        return None, json_addict
+            return True, json_addict.get("access_token", None), response
+        return None, json_addict, response
 
     def get_api_domain_ip(self, **kwargs):
         """
@@ -105,8 +105,8 @@ class Server(object):
         response = httpx.request(**kwargs.to_dict())
         json_addict = HttpxResponseHandler.json_addict(response=response, condition=lambda x: x.is_success)
         if Draft202012Validator(self.get_api_domain_ip_validate_json_schema).is_valid(json_addict):
-            return True, json_addict.get("ip_list", [])
-        return None, json_addict
+            return True, json_addict.get("ip_list", []), response
+        return None, json_addict, response
 
     def message_send(self, **kwargs):
         """
@@ -122,8 +122,8 @@ class Server(object):
         response = httpx.request(**kwargs.to_dict())
         json_addict = HttpxResponseHandler.json_addict(response=response, condition=lambda x: x.is_success)
         if Draft202012Validator(self.message_send_validate_json_schema).is_valid(json_addict):
-            return True, json_addict
-        return None, json_addict
+            return True, json_addict, response
+        return None, json_addict, response
 
     def media_upload(self, f_type="file", **kwargs):
         """
@@ -141,8 +141,8 @@ class Server(object):
         response = httpx.request(**kwargs.to_dict())
         json_addict = HttpxResponseHandler.json_addict(response=response, condition=lambda x: x.is_success)
         if Draft202012Validator(self.media_upload_validate_json_schema).is_valid(json_addict):
-            return True, json_addict.get("media_id", None)
-        return None, json_addict
+            return True, json_addict.get("media_id", None), response
+        return None, json_addict, response
 
     def media_uploadimg(self, **kwargs):
         """
@@ -158,8 +158,8 @@ class Server(object):
         response = httpx.request(**kwargs.to_dict())
         json_addict = HttpxResponseHandler.json_addict(response=response, condition=lambda x: x.is_success)
         if Draft202012Validator(self.media_uploadimg_validate_json_schema).is_valid(json_addict):
-            return True, json_addict.get("url", None)
-        return None, json_addict
+            return True, json_addict.get("url", None), response
+        return None, json_addict, response
 
     def refresh_access_token(self, expire: Union[float, int, timedelta] = 7100):
         """
@@ -170,25 +170,25 @@ class Server(object):
         :return: self
         """
         if not isinstance(self.cache_instance, (diskcache.Cache, redis.Redis, redis.StrictRedis)):
-            state, access_token = self.gettoken()
+            state, access_token, _ = self.gettoken()
             if state and isinstance(access_token, str) and len(access_token):
                 self.access_token = access_token
         else:
             cache_key = f"access_token_{self.agentid}"
             if isinstance(self.cache_instance, diskcache.Cache):
                 self.access_token = self.cache_instance.get(cache_key, "")
-                state, _ = self.get_api_domain_ip()
+                state, _, _ = self.get_api_domain_ip()
                 if not state:
-                    state, access_token = self.gettoken()
+                    state, access_token, _ = self.gettoken()
                     if state and isinstance(access_token, str) and len(access_token):
                         self.access_token = access_token
                         self.cache_instance.set(key=cache_key, value=self.access_token,
                                                 expire=expire or timedelta(seconds=7100).total_seconds())
             if isinstance(self.cache_instance, (redis.Redis, redis.StrictRedis)):
                 self.access_token = self.cache_instance.get(cache_key)
-                state, _ = self.get_api_domain_ip()
+                state, _, _ = self.get_api_domain_ip()
                 if not state:
-                    state, access_token = self.gettoken()
+                    state, access_token, _ = self.gettoken()
                     if state and isinstance(access_token, str) and len(access_token):
                         self.access_token = access_token
                         self.cache_instance.set(name=cache_key, value=self.access_token,

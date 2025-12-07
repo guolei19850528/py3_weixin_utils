@@ -35,6 +35,7 @@ class MyTestCase(unittest.TestCase):
         corpsecret = "caVcNxS9qP8utsCkPaG7NH0I-j1vr9EMRi0WpsvkzVU"
         server_instance = server.Server(agentid=agentid, corpid=corpid, corpsecret=corpsecret,
                                         cache_instance=diskcache_default_instance)
+        state,ip_list,response=server_instance.refresh_access_token().get_api_domain_ip()
         self.assertEqual(True, True)  # add assertion here
 
 
