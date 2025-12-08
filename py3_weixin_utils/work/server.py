@@ -170,37 +170,46 @@ class Server(object):
             return True, json_addict.get("url", None), response
         return None, json_addict, response
 
-    def refresh_access_token(self, expire: Union[float, int, timedelta] = 7100):
+    def refresh_access_token(self, expire: Union[float, int, timedelta] = 7100,
+                             gettoken_kwargs: Union[dict, Dict] = {}, get_api_domain_ip_kwargs: Union[dict, Dict] = {}):
         """
         刷新 access_token
 
         如果传递了cache_instance 则先取缓存中的 access_token 否则直接获取 access_token
         :param expire: 缓存过期时间
+        :param gettoken_kwargs: gettoken kwargs
+        :param get_api_domain_ip_kwargs: get_api_domain_ip kwargs
         :return: self
         """
         if not isinstance(self.cache_instance, (diskcache.Cache, redis.Redis, redis.StrictRedis)):
-            state, access_token, _ = self.gettoken()
+            state, access_token, _ = self.gettoken(**Dict(gettoken_kwargs).to_dict())
             if state and isinstance(access_token, str) and len(access_token):
                 self.access_token = access_token
         else:
             cache_key = f"access_token_{self.agentid}"
             if isinstance(self.cache_instance, diskcache.Cache):
                 self.access_token = self.cache_instance.get(cache_key, "")
-                state, _, _ = self.get_api_domain_ip()
+                state, _, _ = self.get_api_domain_ip(**Dict(get_api_domain_ip_kwargs).to_dict())
                 if not state:
-                    state, access_token, _ = self.gettoken()
+                    state, access_token, _ = self.gettoken(**Dict(gettoken_kwargs).to_dict())
                     if state and isinstance(access_token, str) and len(access_token):
                         self.access_token = access_token
-                        self.cache_instance.set(key=cache_key, value=self.access_token,
-                                                expire=expire or timedelta(seconds=7100).total_seconds())
+                        self.cache_instance.set(
+                            key=cache_key,
+                            value=self.access_token,
+                            expire=expire.total_seconds() if isinstance(expire, timedelta) else expire
+                        )
             if isinstance(self.cache_instance, (redis.Redis, redis.StrictRedis)):
                 self.access_token = self.cache_instance.get(cache_key)
-                state, _, _ = self.get_api_domain_ip()
+                state, _, _ = self.get_api_domain_ip(**Dict(get_api_domain_ip_kwargs).to_dict())
                 if not state:
-                    state, access_token, _ = self.gettoken()
+                    state, access_token, _ = self.gettoken(**Dict(gettoken_kwargs).to_dict())
                     if state and isinstance(access_token, str) and len(access_token):
                         self.access_token = access_token
-                        self.cache_instance.set(name=cache_key, value=self.access_token,
-                                                ex=expire or timedelta(seconds=7100))
+                        self.cache_instance.set(
+                            name=cache_key,
+                            value=self.access_token,
+                            ex=expire
+                        )
 
         return self

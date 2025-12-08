@@ -17,7 +17,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 setup(
     name="py3-weixin-utils",
-    version="1.0.0",
+    version="1.0.1",
     description="The Python3 Weixin Utils Developed By Guolei",
     long_description=long_description,
     long_description_content_type="text/markdown",
