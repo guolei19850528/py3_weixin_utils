@@ -18,7 +18,7 @@ with open("README.md", "r") as fh:
 setup(
     name="py3-weixin-utils",
     version="1.0.0",
-    description="The Python3 weixin Utils Developed By Guolei",
+    description="The Python3 Weixin Utils Developed By Guolei",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/guolei19850528/py3_weixin_utils",
